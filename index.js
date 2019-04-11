@@ -144,41 +144,29 @@ app.post('/issue-books', urlencodedParser, jsonParser, (req, res) => {
 
 app.post('/return-book', urlencodedParser, jsonParser, (req, res) => {
     const card_no = req.body.card_no;
-    const fname = req.body.fname;
-    const lname = req.body.lname;
     const book_name = req.body.book_name;
-    if (fname == '' || lname == '' || book_name == '') {
+    if (card_no == '' || book_name == '') {
         var obj = getResponseObject('Please enter all the fields.', null)
         res.send(obj)
     }
-    else {
-        database.db.collection('Member').find({ card_no: card_no }).toArray((err, result) => {
-            if (result.length == 0) {
-                var obj = getResponseObject("Member does not exist. Please add a member first.");
+    database.db.collection('Member').find({ "card_no": req.body.card_no, "books.book_name": req.body.book_name }).toArray((err, result) => {
+        if (result.length == 0) {
+            var obj = getResponseObject("Member did not issue this book!", null);
+            res.send(obj);
+        }
+        else if (result.length == 1) {
+            database.db.collection('Member').findOneAndUpdate({ "card_no": card_no }, { $pull: { "books": { book_name } } }, { upsert: true, returnOriginal: false }, (err, result) => {
+                if (err) {
+                    var obj = getResponseObject('Failed to accept return. Please try again later', err)
+                }
+                else {
+                    var obj = getResponseObject('Book returned!', result)
+                }
                 res.send(obj);
-            }
-            
-            else if (result.length == 1) {
-                database.db.collection('Member').find({ card_no: card_no, books: book_name }).toArray((err, result) => {
-                    if(result.length == 1){
-                        database.db.collection('Member').findOneAndUpdate({ card_no: card_no }, { $pop: { books: { book_name } } }, { upsert: true, returnOriginal: false }, (err, result) => {
-                            if (err) {
-                                var obj = getResponseObject('Failed to accept return. Please try again later', err)
-                            }
-                            else {
-                                var obj = getResponseObject('Book returned!', result)
-                            }
-                            res.send(obj);
-                        })
-                    }
-                    else if(result.length == 0){
-                        var obj = getResponseObject('Member did not issue this book!', null);
-                        res.send(obj);
-                    }
-                })
-            }
-        })
-    }
+            })
+        }
+    })
 })
+
 
 app.listen(port, () => console.log(`Server listening on port ${port}!`))
