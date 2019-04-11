@@ -4,10 +4,10 @@ Backend
 Collections in MongoDB:
 1. Member
 
-   card_no
-   fname
-   lname
-   email
+   card_no,
+   fname,
+   lname,
+   email,
    books:[
        {
             book_name: ....,
@@ -21,5 +21,5 @@ Collections in MongoDB:
 
 2. Book
 
-   book_name
+   book_name,
    author
